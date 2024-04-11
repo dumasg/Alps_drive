@@ -10,7 +10,7 @@ const port = 3000
 
 bb.extend(app, {
     upload: true,
-    path: '/tmp/newFolder',
+    path: '/tmp/newFolder/tmp',
     allowedPath: /./
 });
 

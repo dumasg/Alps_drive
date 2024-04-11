@@ -29,9 +29,9 @@ router.get('/', async (req, res, next) => {
 
 })
 
-router.get("/:name", (req, res) => {
+router.get("/*", (req, res) => {
 
-    const pathFileAndRepository = path.join(racinePath, req.params.name)
+    const pathFileAndRepository = path.join(racinePath, req.params[0])
     if (fs.existsSync(pathFileAndRepository)){
         if(isAFile(pathFileAndRepository)){
                 const file = fs.readFileSync(pathFileAndRepository, 'utf-8')
@@ -52,8 +52,9 @@ router.get("/:name", (req, res) => {
     }
 })
 
-router.post("/", async (req, res) => {
-    const repositoryName = req.query.name
+router.post("/*", async (req, res) => {
+    const nameFolder = req.query.name
+    const repositoryName = req.params[0] + nameFolder
     const pathNewFolder = path.join(racinePath, repositoryName)
 
     if(checkCaractAlpha(req.query.name)){
@@ -63,51 +64,41 @@ router.post("/", async (req, res) => {
     }
 })
 
-router.post("/:nameFolder/", async (req, res) => {
-        const pathNewFolder = path.join(racinePath,req.params.nameFolder, req.query.name)
+// router.post("/:nameFolder/", async (req, res) => {
+//         const pathNewFolder = path.join(racinePath,req.params.nameFolder, req.query.name)
+//
+//      if(checkCaractAlpha(req.query.name)){
+//          createNewFolder(pathNewFolder, res)
+//      }else{
+//          return res.status(400).send("Caractère non autorisé")
+//      }
+//
+// })
 
-     if(checkCaractAlpha(req.query.name)){
-         createNewFolder(pathNewFolder, res)
-     }else{
-         return res.status(400).send("Caractère non autorisé")
-     }
-
-})
-
-router.delete("/:name", async (req, res) => {
-    const name = req.params.name
+router.delete("/*", async (req, res) => {
+    const name = req.params[0]
+    console.log(name)
     const pathDeleteFolder = path.join(racinePath, name)
 
-    if (await deleteFolder(pathDeleteFolder)){
+    if (await deleteItem(pathDeleteFolder)){
         return res.sendStatus(200)
     }else{
         return res.status(400).send("La suppression n'a pas été effectuée")
     }
 })
 
-router.delete("/:name/*", async (req, res) => {
-    const pathRequest = req.path
-
-    const pathDeleteFolder = path.join(racinePath, pathRequest)
-
-    if (await deleteFolder(pathDeleteFolder)){
-        return res.sendStatus(200)
-    }else{
-        return res.status(400).send("La suppression n'a pas été effectuée")
-    }
-})
-
-router.put("/*", (req, res) => {
+router.put("/*", async(req, res) => {
     const pathTmp = req.params[0] === '' ? '/' : req.params[0]
     const pathForUpload = path.join(racinePath, pathTmp)
 
     if(!req.files){
         return res.status(400).send("Aucun fichier")
     }else{
-        const filename = req.files.file.filename
+        const filename = pathForUpload + req.files.file.filename
         const fileRequest = req.files.file.file
 
-        fs.renameSync(fileRequest, pathForUpload+filename)
+        fs.renameSync(fileRequest, filename)
+        await deleteItem("/tmp/newFolder/tmp")
         return res.sendStatus(201)
     }
 
@@ -158,7 +149,7 @@ async function createNewFolder(pathNewFolder, res){
     }
 }
 
-async function deleteFolder(pathDeleteFolder){
+async function deleteItem(pathDeleteFolder){
     try{
         await fs.promises.rm(pathDeleteFolder, {recursive: true})
         return true
