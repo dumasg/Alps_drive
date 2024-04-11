@@ -52,15 +52,45 @@ router.post("/", async (req, res) => {
     const repositoryName = req.query.name
     const pathNewFolder = path.join(racinePath, repositoryName)
 
-    checkCaractAlpha(repositoryName)
-    createNewFolder(pathNewFolder, res)
+    if(checkCaractAlpha(req.query.name)){
+        createNewFolder(pathNewFolder, res)
+    }else{
+        return res.status(400).send("Caractère non autorisé")
+    }
 })
 
 router.post("/:nameFolder/", async (req, res) => {
         const pathNewFolder = path.join(racinePath,req.params.nameFolder, req.query.name)
 
-     checkCaractAlpha(req.query.name)
-     createNewFolder(pathNewFolder, res)
+     if(checkCaractAlpha(req.query.name)){
+         createNewFolder(pathNewFolder, res)
+     }else{
+         return res.status(400).send("Caractère non autorisé")
+     }
+
+})
+
+router.delete("/:name", async (req, res) => {
+    const name = req.params.name
+    const pathDeleteFolder = path.join(racinePath, name)
+
+    if (await deleteFolder(pathDeleteFolder)){
+        return res.sendStatus(200)
+    }else{
+        return res.status(400).send("La suppression n'a pas été effectuée")
+    }
+})
+
+router.delete("/:name/*", async (req, res) => {
+    const pathRequest = req.path
+
+    const pathDeleteFolder = path.join(racinePath, pathRequest)
+
+    if (await deleteFolder(pathDeleteFolder)){
+        return res.sendStatus(200)
+    }else{
+        return res.status(400).send("La suppression n'a pas été effectuée")
+    }
 })
 
 
@@ -91,8 +121,10 @@ function listingDataOnRepository(path){
 }
 
 function checkCaractAlpha(str){
-    if(!str.match(new RegExp(/^[a-zA-Z]+$/gm))){
-        return res.status(400).send("Caractère non autorisé")
+    if(str.match(new RegExp(/^[a-zA-Z]+$/gm))){
+        return true
+    }else{
+        return false
     }
 }
 
@@ -102,5 +134,14 @@ async function createNewFolder(pathNewFolder, res){
         return res.sendStatus(201)
     }catch (error) {
         return res.status(404).send("Erreur lors de la création", error)
+    }
+}
+
+async function deleteFolder(pathDeleteFolder){
+    try{
+        await fs.promises.rm(pathDeleteFolder, {recursive: true})
+        return true
+    }catch (error){
+        return false
     }
 }
