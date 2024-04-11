@@ -2,6 +2,10 @@ import express from 'express'
 import path from "path";
 import os from "os";
 import fs from "fs";
+import bb from "busboy";
+
+
+
 
 
 export const router = express.Router()
@@ -93,6 +97,22 @@ router.delete("/:name/*", async (req, res) => {
     }
 })
 
+router.put("/*", (req, res) => {
+    const pathTmp = req.params[0] === '' ? '/' : req.params[0]
+    const pathForUpload = path.join(racinePath, pathTmp)
+
+    if(!req.files){
+        return res.status(400).send("Aucun fichier")
+    }else{
+        const filename = req.files.file.filename
+        const fileRequest = req.files.file.file
+
+        fs.renameSync(fileRequest, pathForUpload+filename)
+        return res.sendStatus(201)
+    }
+
+})
+
 
 function creationResponseInit(pathFile, arrayResponse, file){
     const itemPath = path.join(pathFile, file)
@@ -110,6 +130,7 @@ function creationResponseInit(pathFile, arrayResponse, file){
 function isAFile(path){
     return fs.statSync(path).isFile()
 }
+
 
 
 function listingDataOnRepository(path){

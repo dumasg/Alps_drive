@@ -1,13 +1,19 @@
 import express from 'express'
 import { router } from './router.js'
 import { cors } from './middleware/cors.js'
-import * as os from "os";
-import * as fs from "fs";
-import * as path from "path";
+import bb from "express-busboy";
+
 
 //const express = require('express')
 const app = express()
 const port = 3000
+
+bb.extend(app, {
+    upload: true,
+    path: '/tmp/newFolder',
+    allowedPath: /./
+});
+
 
 app.use(cors)
 
