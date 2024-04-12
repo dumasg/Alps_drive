@@ -24,19 +24,25 @@ router.get("/", async (req, res) => {
 
 router.get("/*", async (req, res) => {
     const pathUser = path.join(racinePath, req.params[0])
-
     try {
-        fs.access(pathUser, fs.constants.R_OK, (err) => {
-            if (!err){
-                readDirectory(pathUser)
-                    .then(files => creationJSONResponse(files)
-                        .then(arrayResponse => {
-                            if (arrayResponse) {
-                                res.status(200).send(arrayResponse)
-                            }else{
-                                res.status(500).send("Erreur avec le serveur")
-                            }
-                        }))
+        fs.access(pathUser, fs.constants.R_OK, async (err) => {
+            if (!err) {
+                const file = await fs.promises.stat(pathUser)
+                if (file.isDirectory()){
+                    readDirectory(pathUser)
+                        .then(files => creationJSONResponse(files)
+                            .then(arrayResponse => {
+                                if (arrayResponse) {
+                                    res.status(200).send(arrayResponse)
+                                } else {
+                                    res.status(500).send("Erreur avec le serveur")
+                                }
+                            }))
+                }else{
+                    const fileRead = fs.readFileSync(pathUser, 'utf-8')
+                    res.status(200).send(fileRead)
+                }
+
             }
         })
     }catch (e) {
